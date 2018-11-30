@@ -12,7 +12,7 @@ class Node {
   }
 
   hasParent () {
-    return this.parent == null
+    return this.parent != null
   }
 }
 
