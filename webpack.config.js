@@ -22,6 +22,16 @@ module.exports = {
       test: /\.m?hbs$/,
       exclude: /(node_modules|bower_components)/,
       use: 'handlebars-loader'
+    }, {
+      test: /\.(png|jpg|gif)$/i,
+      use: [
+        {
+          loader: 'url-loader',
+          options: {
+            limit: 1
+          }
+        }
+      ]
     }]
   },
   plugins: [

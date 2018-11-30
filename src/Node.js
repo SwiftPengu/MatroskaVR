@@ -1,13 +1,18 @@
+import uuid from 'uuid/v4'
+
 // A node
 class Node {
-  constructor (parent = null) {
-    this.parent = parent
+  constructor (element) {
+    this.parent = null
     this.children = []
+    this.element = element
+    this.uuid = uuid()
   }
 
   addChild (child) {
     if (child) {
       this.children.push(child)
+      child.parent = this
     }
   }
 
