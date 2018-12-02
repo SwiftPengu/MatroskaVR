@@ -4,6 +4,7 @@ import uuid from 'uuid/v4'
 class Node {
   constructor (element) {
     this.parent = null
+    this.location = element.getAttribute('position')
     this.children = []
     this.element = element
     this.uuid = uuid()

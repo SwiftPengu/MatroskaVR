@@ -1,62 +1,97 @@
 import 'aframe'
 import 'aframe-extras' // Grid
-import template from './index.hbs'
 import Node from './Node'
+import { randomColorString } from './utils.js'
+
+import * as imgGridUrl from '../assets/grid.png'
+import template from './index.hbs'
 
 // The world data
-const rootNode = new Node()
-window.rootNode = rootNode
-let currentNode = rootNode
-let scene = null
+const world = {
+  rootNode: null,
+  currentNode: null,
+  currentContainer: null
+}
+window.world = world
 
 document.addEventListener('DOMContentLoaded', () => {
-  scene = setupPage()
-  setupInteractivity()
+  setupPage().then((scene) => {
+    world.currentContainer = scene
+    world.rootNode = spawnObject({ x: 0, y: 0, z: 0 })
+  })
 })
 
 function setupPage () {
-  // Inject HTML
-  document.body.innerHTML = template()
-  document.querySelector('#grid').src = require('../assets/grid.png')
-  return document.querySelector('a-scene')
-}
+  return new Promise((resolve) => {
+    // Inject HTML
+    document.body.innerHTML = template()
 
-function setupInteractivity () {
-  // Register clicks on the floor
-  document.querySelector('#floor').addEventListener('click', (ev) =>
-    spawnObject(ev.detail.intersection.point)
-  )
+    // Init the grid
+    document.querySelector('#grid').src = imgGridUrl
+
+    // Register clicks on the floor
+    document.querySelector('#floor').addEventListener('click', (ev) =>
+      spawnObject(ev.detail.intersection.point)
+    )
+
+    // Return the scene
+    resolve(document.querySelector('a-scene'))
+  })
 }
 
 // Initializes and spawns a node at the provided location
-function spawnObject (location, color = null) {
-  if (scene) {
+function spawnObject (location) {
+  if (world.currentContainer) {
     const newObject = document.createElement('a-sphere')
     newObject.setAttribute('position', location)
     newObject.setAttribute('color', randomColorString())
 
     // Add a node
+    console.log(newObject)
     const newNode = new Node(newObject)
-    currentNode.addChild(newNode)
-    scene.appendChild(newObject)
+    if (world.currentNode) {
+      world.currentNode.addChild(newNode)
+    }
 
+    // newObject.addEventListener('click', () => {
+    //   performSwitch(currentNode, newNode)
+    // })
+
+    world.currentContainer.appendChild(newObject)
     console.log('New node added', newNode)
+    return newObject
   } else {
     console.warn('Warning trying to add objects before scene was loaded')
+    return undefined
   }
 }
 
-function randomHex (max, width = null) {
-  let result = Math.floor(Math.random() * max).toString(16).toUpperCase()
-  if (width) {
-    result = result.padStart(2, '0')
+// Animates 'object' such that it becomes the new reference context
+// 'callback' is invoked after the animation finishes
+// 'backwards' indicates whether the animation should be played backwards
+function performSwitch (srcNode, targetNode, callback, backwards = false) {
+  const targetElement = targetNode.element
+
+  // Add child node elements
+
+  // Add a return object except when moving to the rootNode
+  if (targetNode !== world.rootNode) {
+    // TODO use the container as targetelem instead of the scene
+    addTransitionObject(targetNode, srcNode.parent, world.currentContainer)
   }
-  return result.toUpperCase()
+
+  // After animation
+  world.currentNode = targetNode // Switch currentNode
+  if (callback) callback()
 }
 
-function randomColorString () {
-  const r = randomHex(256, 2)
-  const g = randomHex(256, 2)
-  const b = randomHex(256, 2)
-  return `#${r}${g}${b}`
+function addTransitionObject (srcNode, targetNode, parentElem) {
+  const returnElem = document.createElement('a-cube')
+  returnElem.setAttribute('color', 'blue')
+  returnElem.setAttribute('scale', '0.5 0.5 0.5')
+  returnElem.addEventListener('click', () => {
+    performSwitch(srcNode, targetNode, null, true)
+  })
+
+  parentElem.appendChild(returnElem)
 }
